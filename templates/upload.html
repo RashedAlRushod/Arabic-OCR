@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التعرف الضوئي للأرقام العربية</title>
+    <style>
+        body {
+            background-color: #2c2f33;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        form {
+            background-color: #23272a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        label {
+            background-color: #7289da;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button {
+            background-color: #43b581;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 10px;
+        }
+
+        button:hover, label:hover {
+            background-color: #2c2f33;
+        }
+
+        #remove-btn {
+            background-color: #f04747;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 10px;
+            display: none; /* مخفي بشكل افتراضي */
+        }
+
+        #result {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #uploaded-image {
+            max-width: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        audio {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>التعرف الضوئي للأرقام العربية</h1>
+    <form id="uploadForm" action="/predict" method="POST" enctype="multipart/form-data">
+        <label for="image-upload">التقط صورة للرقم</label>
+        <input type="file" id="image-upload" name="image" accept="image/*" capture="camera">
+        <button type="button" id="remove-btn">إزالة الصورة</button>
+    </form>
+
+    <div id="result" style="display: none;">
+        <h3>الرقم العربي المتوقع هو</h3>
+        <p id="arabic-number"></p>
+        <img id="uploaded-image" src="#" alt="الصورة المرفوعة" style="display: none;">
+        <audio id="number-audio" controls></audio>
+    </div>
+
+    <script>
+        // Handle file selection and automatically submit the form
+        document.getElementById('image-upload').onchange = async function() {
+            const formData = new FormData(document.getElementById('uploadForm'));
+
+            // Send the image to the server
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('arabic-number').innerText = data.number;
+                document.getElementById('number-audio').src = data.sound_url;
+
+                // Display the uploaded image
+                const file = document.querySelector('input[name="image"]').files[0];
+                const imgURL = URL.createObjectURL(file);
+                document.getElementById('uploaded-image').src = imgURL;
+                document.getElementById('uploaded-image').style.display = 'block';
+                document.getElementById('remove-btn').style.display = 'inline-block';
+
+                // Show the result section
+                document.getElementById('result').style.display = 'block';
+            } else {
+                alert("Failed to get a prediction.");
+            }
+        };
+
+        // Show file input when label is clicked
+        document.querySelector('label[for="image-upload"]').addEventListener('click', function() {
+            document.getElementById('image-upload').click();
+        });
+
+        // Remove the uploaded image and reset form
+        document.getElementById('remove-btn').onclick = function() {
+            document.getElementById('image-upload').value = ''; // Reset file input
+            document.getElementById('uploaded-image').src = '#';
+            document.getElementById('uploaded-image').style.display = 'none';
+            document.getElementById('arabic-number').innerText = '';
+            document.getElementById('number-audio').src = '';
+            document.getElementById('remove-btn').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+        };
+    </script>
+</body>
+</html>
